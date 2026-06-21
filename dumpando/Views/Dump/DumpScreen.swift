@@ -16,7 +16,7 @@ struct DumpScreen: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 10) {
-                    SectionCard(title: "Brain Dump", count: draftDumpText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0 : 1) {
+                    SectionCard(title: "Brain Dump", count: 0, showsCount: false) {
                         VStack(alignment: .leading, spacing: 12) {
                             TextField("Drop a thought", text: $draftDumpText, axis: .vertical)
                                 .textFieldStyle(.plain)
@@ -127,10 +127,6 @@ struct PoolRow: View {
                 Text(item.text)
                     .foregroundStyle(Theme.text)
                     .lineLimit(2)
-
-                Text(item.createdAt.formatted(.dateTime.hour().minute()))
-                    .font(.caption2)
-                    .foregroundStyle(Theme.subtle)
             }
 
             Spacer()

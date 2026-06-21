@@ -3,11 +3,13 @@ import SwiftUI
 struct SectionCard<Content: View>: View {
     let title: String
     let count: Int
+    let showsCount: Bool
     let content: Content
 
-    init(title: String, count: Int, @ViewBuilder content: () -> Content) {
+    init(title: String, count: Int, showsCount: Bool = true, @ViewBuilder content: () -> Content) {
         self.title = title
         self.count = count
+        self.showsCount = showsCount
         self.content = content()
     }
 
@@ -20,10 +22,11 @@ struct SectionCard<Content: View>: View {
                     .foregroundStyle(Theme.subtle)
 
                 Spacer()
-
-                Text("\(count)")
-                    .font(.caption2.monospacedDigit())
-                    .foregroundStyle(Theme.subtle)
+                if showsCount {
+                    Text("\(count)")
+                        .font(.caption2.monospacedDigit())
+                        .foregroundStyle(Theme.subtle)
+                }
             }
 
             content
