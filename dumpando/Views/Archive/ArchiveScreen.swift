@@ -25,6 +25,7 @@ struct ArchiveScreen: View {
                             ArchiveRow(session: session)
                         }
                         .listRowBackground(Theme.background)
+                        .listRowInsets(EdgeInsets(top: 3, leading: 16, bottom: 3, trailing: 16))
                         .listRowSeparator(.hidden)
                     }
                 }
@@ -34,6 +35,7 @@ struct ArchiveScreen: View {
             .contentMargins(.top, 0, for: .scrollContent)
             .background(AppBackgroundView())
             .navigationTitle("Archive")
+            .navigationBarTitleDisplayMode(.inline)
             .navigationDestination(for: PersistentIdentifier.self) { id in
                 if let session = archivedSessions.first(where: { $0.persistentModelID == id }) {
                     ArchivedLoopView(

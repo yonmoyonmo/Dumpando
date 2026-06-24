@@ -61,6 +61,7 @@ struct DumpScreen: View {
             .simultaneousGesture(TapGesture().onEnded { draftFocused = false })
             .background(AppBackgroundView())
             .navigationTitle("Dump")
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
 }

@@ -41,6 +41,7 @@ struct LoopScreen: View {
             }
             .background(AppBackgroundView())
             .navigationTitle("Loop")
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
 }
@@ -127,7 +128,7 @@ struct ActiveLoopView: View {
         VStack(spacing: 18) {
             SessionHeader(
                 title: "Live Loop",
-                subtitle: session.startedAt.formatted(.dateTime.year().month().day().hour().minute()),
+                subtitle: session.startedAt.formatted(.dateTime.year().month().day()),
                 compact: true,
                 maxWidth: 520
             ) {
@@ -135,22 +136,34 @@ struct ActiveLoopView: View {
             }
 
             SectionCard(title: "Brain Dump Pool", count: dumpItems.count) {
-                if dumpItems.isEmpty {
-                    EmptyInlineRow(text: "No pool items waiting.")
-                } else {
-                    VStack(spacing: 10) {
-                        ForEach(dumpItems) { item in
-                            PoolRow(
-                                item: item,
-                                actionTitle: "➡️",
-                                isActionEnabled: true,
-                                onEdit: { onEditDump(item) },
-                                onDelete: { onDeleteDump(item) },
-                                onAction: { onSendToLoop(item) }
-                            )
+                ScrollView {
+                    if dumpItems.isEmpty {
+                        EmptyInlineRow(text: "No pool items waiting.")
+                            .frame(maxWidth: .infinity, minHeight: 120, alignment: .center)
+                    } else {
+                        LazyVStack(spacing: 4) {
+                            ForEach(dumpItems) { item in
+                                PoolRow(
+                                    item: item,
+                                    actionTitle: "➡️",
+                                    isActionEnabled: true,
+                                    onEdit: { onEditDump(item) },
+                                    onDelete: { onDeleteDump(item) },
+                                    onAction: { onSendToLoop(item) }
+                                )
+                            }
                         }
                     }
                 }
+                .frame(height: 150)
+                .scrollIndicators(.visible)
+                .padding(4)
+                .background(Color.black.opacity(0.025))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .stroke(Theme.border, lineWidth: 1)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             }
 
             SectionCard(title: "Today", count: pendingTasks.count) {
@@ -416,32 +429,32 @@ struct TaskRow: View {
 struct ArchiveRow: View {
     let session: LoopSession
 
-    private var taskCount: Int {
-        session.tasks.count
-    }
-
-    private var pendingCount: Int {
-        session.tasks.filter { $0.state == .pending }.count
+    private var feedbackPreview: String {
+        let feedback = session.feedback.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard feedback.count > 12 else { return feedback }
+        return "\(feedback.prefix(12))..."
     }
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
+        HStack(alignment: .top, spacing: 8) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text(session.displayDate.formatted(.dateTime.year().month().day()))
                     .font(.callout.weight(.semibold))
                     .foregroundStyle(Theme.text)
 
-                Text("\(taskCount) tasks · \(pendingCount) open")
+                Text(feedbackPreview)
                     .font(.caption2)
                     .foregroundStyle(Theme.subtle)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
             }
 
             Spacer()
         }
-        .padding(6)
-        .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color.black.opacity(0.03)))
+        .padding(4)
+        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color.black.opacity(0.03)))
         .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .stroke(Theme.border, lineWidth: 1)
         )
     }
