@@ -71,6 +71,7 @@ struct DumpEditSheet: View {
     let onCancel: () -> Void
     let onSave: () -> Void
     let onDelete: () -> Void
+    @State private var isConfirmingDelete = false
 
     var body: some View {
         NavigationStack {
@@ -94,8 +95,10 @@ struct DumpEditSheet: View {
                 Spacer()
 
                 HStack {
-                    Button("Delete", action: onDelete)
-                        .buttonStyle(MonochromeButtonStyle(kind: .ghost))
+                    Button("Delete") {
+                        isConfirmingDelete = true
+                    }
+                    .buttonStyle(MonochromeButtonStyle(kind: .ghost))
 
                     Spacer()
 
@@ -110,6 +113,12 @@ struct DumpEditSheet: View {
             .frame(maxWidth: 520, maxHeight: .infinity, alignment: .topLeading)
             .background(AppBackgroundView())
             .toolbar(.hidden, for: .navigationBar)
+            .alert("Delete this dump?", isPresented: $isConfirmingDelete) {
+                Button("Cancel", role: .cancel) {}
+                Button("Delete", role: .destructive, action: onDelete)
+            } message: {
+                Text("This cannot be undone.")
+            }
         }
     }
 }
@@ -121,6 +130,7 @@ struct PoolRow: View {
     let onEdit: () -> Void
     let onDelete: () -> Void
     let onAction: () -> Void
+    @State private var isConfirmingDelete = false
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -136,8 +146,10 @@ struct PoolRow: View {
                 Button("✏️", action: onEdit)
                     .buttonStyle(MonochromeButtonStyle(kind: .ghost))
 
-                Button("🗑️", action: onDelete)
-                    .buttonStyle(MonochromeButtonStyle(kind: .ghost))
+                Button("🗑️") {
+                    isConfirmingDelete = true
+                }
+                .buttonStyle(MonochromeButtonStyle(kind: .ghost))
 
                 if let actionTitle {
                     Button(actionTitle, action: onAction)
@@ -153,5 +165,11 @@ struct PoolRow: View {
                 .stroke(Theme.border, lineWidth: 1)
         )
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .alert("Delete this dump?", isPresented: $isConfirmingDelete) {
+            Button("Cancel", role: .cancel) {}
+            Button("Delete", role: .destructive, action: onDelete)
+        } message: {
+            Text("This cannot be undone.")
+        }
     }
 }

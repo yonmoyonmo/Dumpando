@@ -244,6 +244,7 @@ struct ArchivedLoopView: View {
     let session: LoopSession
     let onOpenCurrentLoop: () -> Void
     let onDeleteArchive: (LoopSession) -> Void
+    @State private var isConfirmingDelete = false
 
     private var sortedTasks: [LoopTask] {
         session.tasks.sorted { $0.createdAt < $1.createdAt }
@@ -286,7 +287,7 @@ struct ArchivedLoopView: View {
                 }
 
                 Button("Delete Archived Loop", role: .destructive) {
-                    onDeleteArchive(session)
+                    isConfirmingDelete = true
                 }
                 .buttonStyle(MonochromeButtonStyle(kind: .ghost))
             }
@@ -295,6 +296,14 @@ struct ArchivedLoopView: View {
             .frame(maxWidth: .infinity)
         }
         .background(AppBackgroundView())
+        .alert("Delete this archived loop?", isPresented: $isConfirmingDelete) {
+            Button("Cancel", role: .cancel) {}
+            Button("Delete", role: .destructive) {
+                onDeleteArchive(session)
+            }
+        } message: {
+            Text("All tasks and feedback in this archive will be removed.")
+        }
     }
 }
 
