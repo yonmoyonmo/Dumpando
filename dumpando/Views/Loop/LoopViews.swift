@@ -425,37 +425,3 @@ struct TaskRow: View {
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 }
-
-struct ArchiveRow: View {
-    let session: LoopSession
-
-    private var feedbackPreview: String {
-        let feedback = session.feedback.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard feedback.count > 12 else { return feedback }
-        return "\(feedback.prefix(12))..."
-    }
-
-    var body: some View {
-        HStack(alignment: .top, spacing: 8) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(session.displayDate.formatted(.dateTime.year().month().day()))
-                    .font(.callout.weight(.semibold))
-                    .foregroundStyle(Theme.text)
-
-                Text(feedbackPreview)
-                    .font(.caption2)
-                    .foregroundStyle(Theme.subtle)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-            }
-
-            Spacer()
-        }
-        .padding(4)
-        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color.black.opacity(0.03)))
-        .overlay(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .stroke(Theme.border, lineWidth: 1)
-        )
-    }
-}
