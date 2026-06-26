@@ -101,18 +101,18 @@ struct ContentView: View {
                 taskText: draft.text,
                 title: "Set time block",
                 confirmTitle: "Add to Today",
-                startAt: $pendingPromotionStartAt,
-                endAt: $pendingPromotionEndAt,
+                startAt: pendingPromotionStartAt,
+                endAt: pendingPromotionEndAt,
                 onCancel: {
                     pendingPromotion = nil
                     pendingPromotionStartAt = .now
                     pendingPromotionEndAt = .now.addingTimeInterval(3600)
                 },
-                onConfirm: {
+                onConfirm: { startAt, endAt in
                     commitPromotion(
                         draft: draft,
-                        startAt: pendingPromotionStartAt,
-                        endAt: pendingPromotionEndAt
+                        startAt: startAt,
+                        endAt: endAt
                     )
                     pendingPromotion = nil
                     pendingPromotionStartAt = .now
@@ -139,11 +139,11 @@ struct ContentView: View {
                 taskText: draft.text,
                 title: "Edit time block",
                 confirmTitle: "Save Time",
-                startAt: $editingTaskStartAt,
-                endAt: $editingTaskEndAt,
+                startAt: editingTaskStartAt,
+                endAt: editingTaskEndAt,
                 onCancel: { editingTaskTime = nil },
-                onConfirm: {
-                    saveTaskTimeEdit(draft: draft, startAt: editingTaskStartAt, endAt: editingTaskEndAt)
+                onConfirm: { startAt, endAt in
+                    saveTaskTimeEdit(draft: draft, startAt: startAt, endAt: endAt)
                     editingTaskTime = nil
                 }
             )
@@ -259,13 +259,24 @@ struct ContentView: View {
         selectedTab = .loop
     }
 
+    private func normalizedTimeRange(startAt: Date, endAt: Date) -> (startAt: Date, endAt: Date) {
+        var normalizedEndAt = endAt
+
+        while normalizedEndAt <= startAt {
+            normalizedEndAt = Calendar.current.date(byAdding: .day, value: 1, to: normalizedEndAt)
+                ?? startAt.addingTimeInterval(3600)
+        }
+
+        return (startAt, normalizedEndAt)
+    }
+
     private func commitPromotion(draft: PromotionDraft, startAt: Date, endAt: Date) {
         guard let activeSession else {
             alertMessage = "Start a loop first."
             return
         }
 
-        let normalizedEndAt = max(endAt, startAt.addingTimeInterval(60))
+        let normalizedRange = normalizedTimeRange(startAt: startAt, endAt: endAt)
 
         guard let item = modelContext.model(for: draft.itemID) as? BrainDumpItem else {
             alertMessage = "That dump item is no longer available."
@@ -276,8 +287,8 @@ struct ContentView: View {
             modelContext.insert(
                 LoopTask(
                     text: item.text,
-                    plannedStartAt: startAt,
-                    plannedEndAt: normalizedEndAt,
+                    plannedStartAt: normalizedRange.startAt,
+                    plannedEndAt: normalizedRange.endAt,
                     session: activeSession
                 )
             )
@@ -298,7 +309,7 @@ struct ContentView: View {
     }
 
     private func saveTaskTimeEdit(draft: TaskTimeDraft, startAt: Date, endAt: Date) {
-        let normalizedEndAt = max(endAt, startAt.addingTimeInterval(60))
+        let normalizedRange = normalizedTimeRange(startAt: startAt, endAt: endAt)
 
         guard let task = modelContext.model(for: draft.taskID) as? LoopTask else {
             alertMessage = "That task is no longer available."
@@ -306,8 +317,8 @@ struct ContentView: View {
         }
 
         withAnimation {
-            task.plannedStartAt = startAt
-            task.plannedEndAt = normalizedEndAt
+            task.plannedStartAt = normalizedRange.startAt
+            task.plannedEndAt = normalizedRange.endAt
         }
 
         _ = saveContext(fallback: "Could not update task time.")

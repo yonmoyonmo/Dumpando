@@ -47,59 +47,150 @@ struct LoopScreen: View {
 }
 
 struct TimeBoxSheet: View {
+    private enum TimeField {
+        case start
+        case end
+
+        var title: String {
+            switch self {
+            case .start:
+                return "시작 시간"
+            case .end:
+                return "끝 시간"
+            }
+        }
+    }
+
     let taskText: String
     let title: String
     let confirmTitle: String
-    @Binding var startAt: Date
-    @Binding var endAt: Date
     let onCancel: () -> Void
-    let onConfirm: () -> Void
+    let onConfirm: (Date, Date) -> Void
+    @State private var draftStartAt: Date
+    @State private var draftEndAt: Date
+    @State private var editingTimeField: TimeField?
+    @State private var pickerDraftAt: Date = .now
+
+    init(
+        taskText: String,
+        title: String,
+        confirmTitle: String,
+        startAt: Date,
+        endAt: Date,
+        onCancel: @escaping () -> Void,
+        onConfirm: @escaping (Date, Date) -> Void
+    ) {
+        self.taskText = taskText
+        self.title = title
+        self.confirmTitle = confirmTitle
+        self.onCancel = onCancel
+        self.onConfirm = onConfirm
+        _draftStartAt = State(initialValue: startAt)
+        _draftEndAt = State(initialValue: endAt)
+    }
 
     var body: some View {
         NavigationStack {
-            VStack(alignment: .leading, spacing: 12) {
-                Text(title)
-                    .font(.headline.weight(.semibold))
-                    .foregroundStyle(Theme.text)
-
-                Text(taskText)
-                    .font(.caption)
-                    .foregroundStyle(Theme.subtle)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                VStack(alignment: .leading, spacing: 10) {
-                    LabeledContent("시작") {
-                        DatePicker("", selection: $startAt, displayedComponents: .hourAndMinute)
-                            .labelsHidden()
-                            .datePickerStyle(.compact)
-                    }
-
-                    LabeledContent("끝") {
-                        DatePicker("", selection: $endAt, displayedComponents: .hourAndMinute)
-                            .labelsHidden()
-                            .datePickerStyle(.compact)
-                    }
-                }
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(Theme.text)
-
-                HStack {
-                    Button("Cancel", action: onCancel)
-                        .buttonStyle(MonochromeButtonStyle(kind: .ghost))
-
-                    Spacer()
-
-                    Button(confirmTitle, action: onConfirm)
-                        .buttonStyle(MonochromeButtonStyle(kind: .filled))
+            Group {
+                if let editingTimeField {
+                    timePickerContent(for: editingTimeField)
+                } else {
+                    timeBlockContent
                 }
             }
             .padding(16)
             .frame(maxWidth: 420, alignment: .topLeading)
-            .presentationDetents([.height(230)])
+            .presentationDetents([.height(editingTimeField == nil ? 230 : 320)])
             .presentationBackground(Theme.background)
             .background(AppBackgroundView())
             .toolbar(.hidden, for: .navigationBar)
         }
+    }
+
+    private var timeBlockContent: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title)
+                .font(.headline.weight(.semibold))
+                .foregroundStyle(Theme.text)
+
+            Text(taskText)
+                .font(.caption)
+                .foregroundStyle(Theme.subtle)
+                .fixedSize(horizontal: false, vertical: true)
+
+            VStack(alignment: .leading, spacing: 10) {
+                LabeledContent("시작") {
+                    Button(draftStartAt.formatted(.dateTime.hour().minute())) {
+                        openTimePicker(.start, date: draftStartAt)
+                    }
+                    .buttonStyle(MonochromeButtonStyle(kind: .ghost))
+                }
+
+                LabeledContent("끝") {
+                    Button(draftEndAt.formatted(.dateTime.hour().minute())) {
+                        openTimePicker(.end, date: draftEndAt)
+                    }
+                    .buttonStyle(MonochromeButtonStyle(kind: .ghost))
+                }
+            }
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(Theme.text)
+
+            HStack {
+                Button("Cancel", action: onCancel)
+                    .buttonStyle(MonochromeButtonStyle(kind: .ghost))
+
+                Spacer()
+
+                Button(confirmTitle) {
+                    onConfirm(draftStartAt, draftEndAt)
+                }
+                .buttonStyle(MonochromeButtonStyle(kind: .filled))
+            }
+        }
+    }
+
+    private func timePickerContent(for field: TimeField) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(field.title)
+                .font(.headline.weight(.semibold))
+                .foregroundStyle(Theme.text)
+
+            DatePicker("", selection: $pickerDraftAt, displayedComponents: .hourAndMinute)
+                .datePickerStyle(.wheel)
+                .labelsHidden()
+                .frame(maxWidth: .infinity)
+
+            HStack {
+                Button("취소") {
+                    editingTimeField = nil
+                }
+                .buttonStyle(MonochromeButtonStyle(kind: .ghost))
+
+                Spacer()
+
+                Button("확인") {
+                    confirmPickedTime(field)
+                }
+                .buttonStyle(MonochromeButtonStyle(kind: .filled))
+            }
+        }
+    }
+
+    private func openTimePicker(_ field: TimeField, date: Date) {
+        pickerDraftAt = date
+        editingTimeField = field
+    }
+
+    private func confirmPickedTime(_ field: TimeField) {
+        switch field {
+        case .start:
+            draftStartAt = pickerDraftAt
+        case .end:
+            draftEndAt = pickerDraftAt
+        }
+
+        editingTimeField = nil
     }
 }
 
@@ -117,7 +208,14 @@ struct ActiveLoopView: View {
     @FocusState private var feedbackFocused: Bool
 
     private var pendingTasks: [LoopTask] {
-        session.tasks.filter { $0.state == .pending }
+        session.tasks
+            .filter { $0.state == .pending }
+            .sorted {
+                if $0.plannedStartAt == $1.plannedStartAt {
+                    return $0.createdAt < $1.createdAt
+                }
+                return $0.plannedStartAt < $1.plannedStartAt
+            }
     }
 
     private var resolvedTasks: [LoopTask] {
