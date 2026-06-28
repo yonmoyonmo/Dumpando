@@ -12,7 +12,7 @@ struct ArchiveScreen: View {
             List {
                 if archivedSessions.isEmpty {
                     HStack {
-                        Text("No archived loops yet.")
+                        Text("No archived days yet.")
                             .foregroundStyle(.secondary)
                         Spacer()
                     }
@@ -48,7 +48,7 @@ struct ArchiveScreen: View {
                         }
                     )
                 } else {
-                    Text("Archived loop not found.")
+                    Text("Archived day not found.")
                         .foregroundStyle(Theme.subtle)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                         .background(AppBackgroundView())

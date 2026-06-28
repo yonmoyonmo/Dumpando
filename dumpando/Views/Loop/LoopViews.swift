@@ -40,7 +40,7 @@ struct LoopScreen: View {
                 .frame(maxWidth: .infinity)
             }
             .background(AppBackgroundView())
-            .navigationTitle("Loop")
+            .navigationTitle("Today")
             .navigationBarTitleDisplayMode(.inline)
         }
     }
@@ -206,6 +206,8 @@ struct ActiveLoopView: View {
     let onRestoreToToday: (LoopTask) -> Void
     let onArchive: () -> Void
     @FocusState private var feedbackFocused: Bool
+    @State private var isConfirmingArchive = false
+    @State private var isShowingMissingFeedbackAlert = false
 
     private var pendingTasks: [LoopTask] {
         session.tasks
@@ -225,7 +227,7 @@ struct ActiveLoopView: View {
     var body: some View {
         VStack(spacing: 18) {
             SessionHeader(
-                title: "Live Loop",
+                title: "Today",
                 subtitle: session.startedAt.formatted(.dateTime.year().month().day()),
                 compact: true,
                 maxWidth: 520
@@ -283,7 +285,7 @@ struct ActiveLoopView: View {
 
             SectionCard(title: "Resolved", count: resolvedTasks.count) {
                 if resolvedTasks.isEmpty {
-                    EmptyInlineRow(text: "Resolved items stay in this loop.")
+                    EmptyInlineRow(text: "Resolved items stay in Today.")
                 } else {
                     VStack(spacing: 10) {
                         ForEach(resolvedTasks) { task in
@@ -325,9 +327,14 @@ struct ActiveLoopView: View {
 
                         Spacer()
 
-                        Button("Archive Loop", action: onArchive)
-                            .buttonStyle(MonochromeButtonStyle(kind: .filled))
-                            .disabled(session.feedback.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        Button("Archive Today") {
+                            if session.feedback.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                isShowingMissingFeedbackAlert = true
+                            } else {
+                                isConfirmingArchive = true
+                            }
+                        }
+                        .buttonStyle(MonochromeButtonStyle(kind: .filled))
                     }
                 }
             }
@@ -335,6 +342,17 @@ struct ActiveLoopView: View {
         .simultaneousGesture(TapGesture().onEnded {
             feedbackFocused = false
         })
+        .alert("Archive Today?", isPresented: $isConfirmingArchive) {
+            Button("Cancel", role: .cancel) {}
+            Button("Archive", role: .destructive, action: onArchive)
+        } message: {
+            Text("Today will move to Archive and cannot be edited afterward.")
+        }
+        .alert("Feedback required", isPresented: $isShowingMissingFeedbackAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Add feedback before archiving Today.")
+        }
     }
 }
 
@@ -352,7 +370,7 @@ struct ArchivedLoopView: View {
         ScrollView {
             VStack(spacing: 10) {
                 SessionHeader(
-                    title: "Archived Loop",
+                    title: "Archived Today",
                     subtitle: session.displayDate.formatted(.dateTime.year().month().day()),
                     compact: true,
                     maxWidth: 520
@@ -362,7 +380,7 @@ struct ArchivedLoopView: View {
 
                 SectionCard(title: "Tasks", count: sortedTasks.count) {
                     if sortedTasks.isEmpty {
-                        EmptyInlineRow(text: "This loop had no tasks.")
+                        EmptyInlineRow(text: "This archived day had no tasks.")
                     } else {
                         VStack(spacing: 10) {
                             ForEach(sortedTasks) { task in
@@ -384,7 +402,7 @@ struct ArchivedLoopView: View {
                         )
                 }
 
-                Button("Delete Archived Loop", role: .destructive) {
+                Button("Delete Archived Today", role: .destructive) {
                     isConfirmingDelete = true
                 }
                 .buttonStyle(MonochromeButtonStyle(kind: .ghost))
@@ -394,7 +412,7 @@ struct ArchivedLoopView: View {
             .frame(maxWidth: .infinity)
         }
         .background(AppBackgroundView())
-        .alert("Delete this archived loop?", isPresented: $isConfirmingDelete) {
+        .alert("Delete archived Today?", isPresented: $isConfirmingDelete) {
             Button("Cancel", role: .cancel) {}
             Button("Delete", role: .destructive) {
                 onDeleteArchive(session)
@@ -410,16 +428,16 @@ struct EmptyLoopView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
-            Text("NO ACTIVE LOOP")
+            Text("NO ACTIVE TODAY")
                 .font(.caption.weight(.semibold))
                 .tracking(1.4)
                 .foregroundStyle(Theme.subtle)
 
-            Text("Start a loop when you are ready to turn raw thoughts into today's work.")
+            Text("Start Today when you are ready to turn raw thoughts into today's work.")
                 .font(.title3.weight(.semibold))
                 .foregroundStyle(Theme.text)
 
-            Button("Start Loop", action: onStartLoop)
+            Button("Start Today", action: onStartLoop)
                 .buttonStyle(MonochromeButtonStyle(kind: .filled))
         }
         .padding(18)

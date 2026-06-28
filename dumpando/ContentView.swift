@@ -81,7 +81,7 @@ struct ContentView: View {
                 onArchive: archiveActiveSession
             )
             .tabItem {
-                Label("Loop", systemImage: "sparkles")
+                Label("Today", systemImage: "sparkles")
             }
             .tag(RootTab.loop)
 
@@ -237,7 +237,7 @@ struct ContentView: View {
             modelContext.insert(LoopSession())
         }
 
-        if saveContext(fallback: "Could not start a new loop.") {
+        if saveContext(fallback: "Could not start Today.") {
             selectedTab = .loop
         }
     }
@@ -245,7 +245,7 @@ struct ContentView: View {
     private func requestPromotion(_ item: BrainDumpItem) {
         guard activeSession != nil else {
             selectedTab = .loop
-            alertMessage = "Start a loop first."
+            alertMessage = "Start Today first."
             return
         }
 
@@ -272,7 +272,7 @@ struct ContentView: View {
 
     private func commitPromotion(draft: PromotionDraft, startAt: Date, endAt: Date) {
         guard let activeSession else {
-            alertMessage = "Start a loop first."
+            alertMessage = "Start Today first."
             return
         }
 
@@ -295,7 +295,7 @@ struct ContentView: View {
             modelContext.delete(item)
         }
 
-        _ = saveContext(fallback: "Could not move dump into today's loop.")
+        _ = saveContext(fallback: "Could not move dump into Today.")
     }
 
     private func requestTaskTimeEdit(_ task: LoopTask) {
@@ -366,7 +366,7 @@ struct ContentView: View {
             activeSession.archivedAt = .now
         }
 
-        if saveContext(fallback: "Could not archive the loop.") {
+        if saveContext(fallback: "Could not archive Today.") {
             selectedTab = .archive
         }
     }
@@ -376,6 +376,6 @@ struct ContentView: View {
             modelContext.delete(session)
         }
 
-        return saveContext(fallback: "Could not delete the archived loop.")
+        return saveContext(fallback: "Could not delete archived Today.")
     }
 }
