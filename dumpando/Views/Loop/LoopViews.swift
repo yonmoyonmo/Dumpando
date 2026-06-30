@@ -54,9 +54,9 @@ struct TimeBoxSheet: View {
         var title: String {
             switch self {
             case .start:
-                return "시작 시간"
+                return "Start Time"
             case .end:
-                return "끝 시간"
+                return "End Time"
             }
         }
     }
@@ -119,14 +119,14 @@ struct TimeBoxSheet: View {
                 .fixedSize(horizontal: false, vertical: true)
 
             VStack(alignment: .leading, spacing: 10) {
-                LabeledContent("시작") {
+                LabeledContent("Start") {
                     Button(draftStartAt.formatted(.dateTime.hour().minute())) {
                         openTimePicker(.start, date: draftStartAt)
                     }
                     .buttonStyle(MonochromeButtonStyle(kind: .ghost))
                 }
 
-                LabeledContent("끝") {
+                LabeledContent("End") {
                     Button(draftEndAt.formatted(.dateTime.hour().minute())) {
                         openTimePicker(.end, date: draftEndAt)
                     }
@@ -162,14 +162,14 @@ struct TimeBoxSheet: View {
                 .frame(maxWidth: .infinity)
 
             HStack {
-                Button("취소") {
+                Button("Cancel") {
                     editingTimeField = nil
                 }
                 .buttonStyle(MonochromeButtonStyle(kind: .ghost))
 
                 Spacer()
 
-                Button("확인") {
+                Button("OK") {
                     confirmPickedTime(field)
                 }
                 .buttonStyle(MonochromeButtonStyle(kind: .filled))
